@@ -5,6 +5,7 @@ import { Card } from "@/components/Card";
 import type { AnalysisResult } from "@/types/analysis";
 import { AnxietyScore } from "@/components/AnxietyScore";
 import { CopyButton } from "@/components/CopyButton";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface ResultDisplayProps {
   result: AnalysisResult;
@@ -19,6 +20,8 @@ export function ResultDisplay({
   originalMessage,
   showActions = true,
 }: ResultDisplayProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="space-y-4 animate-fade-in-up">
       <Card>
@@ -28,7 +31,9 @@ export function ResultDisplay({
       <Card>
         <div className="mb-2 flex items-center gap-2">
           <span className="text-lg">🔍</span>
-          <h3 className="font-display text-lg font-semibold">Pattern Analysis</h3>
+          <h3 className="font-display text-lg font-semibold">
+            {t.result.patternAnalysis}
+          </h3>
         </div>
         <p className="leading-relaxed text-text">{result.anxiousPatternAnalysis}</p>
       </Card>
@@ -37,7 +42,9 @@ export function ResultDisplay({
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-lg">✨</span>
-            <h3 className="font-display text-lg font-semibold">Secure Rewrite</h3>
+            <h3 className="font-display text-lg font-semibold">
+              {t.result.secureRewrite}
+            </h3>
           </div>
           <CopyButton text={result.secureRewrite} />
         </div>
@@ -49,7 +56,9 @@ export function ResultDisplay({
       <Card>
         <div className="mb-2 flex items-center gap-2">
           <span className="text-lg">🛡️</span>
-          <h3 className="font-display text-lg font-semibold">Boundary Statement</h3>
+          <h3 className="font-display text-lg font-semibold">
+            {t.result.boundaryStatement}
+          </h3>
         </div>
         <p className="leading-relaxed text-text">{result.boundaryStatement}</p>
       </Card>
@@ -57,7 +66,9 @@ export function ResultDisplay({
       <Card>
         <div className="mb-2 flex items-center gap-2">
           <span className="text-lg">🌱</span>
-          <h3 className="font-display text-lg font-semibold">Suggested Next Step</h3>
+          <h3 className="font-display text-lg font-semibold">
+            {t.result.suggestedNextStep}
+          </h3>
         </div>
         <p className="leading-relaxed text-text">{result.suggestedNextAction}</p>
       </Card>
@@ -65,7 +76,9 @@ export function ResultDisplay({
       <Card className="border-rose/10">
         <div className="mb-2 flex items-center gap-2">
           <span className="text-lg">🚫</span>
-          <h3 className="font-display text-lg font-semibold">What Not To Do</h3>
+          <h3 className="font-display text-lg font-semibold">
+            {t.result.whatNotToDo}
+          </h3>
         </div>
         <p className="leading-relaxed text-text-muted">{result.whatNotToDo}</p>
       </Card>
@@ -73,14 +86,14 @@ export function ResultDisplay({
       {originalMessage && (
         <details className="card p-4">
           <summary className="cursor-pointer text-sm font-medium text-text-muted">
-            View original message
+            {t.result.viewOriginal}
           </summary>
           <p className="mt-3 text-sm leading-relaxed text-text-muted italic">
             &ldquo;{originalMessage}&rdquo;
           </p>
           {situation && (
             <p className="mt-2 text-xs text-text-muted">
-              Situation: {situation}
+              {t.result.situationLabel}: {situation}
             </p>
           )}
         </details>
@@ -89,13 +102,13 @@ export function ResultDisplay({
       {showActions && (
         <div className="flex flex-col gap-3 pt-2">
           <Link href="/input" className="btn-primary block py-3.5 text-center">
-            Reflect on Another Message
+            {t.result.reflectAnother}
           </Link>
           <Link
             href="/history"
             className="btn-secondary block py-3.5 text-center"
           >
-            View History
+            {t.result.viewHistory}
           </Link>
         </div>
       )}

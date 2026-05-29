@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { Card } from "@/components/Card";
+import { useLanguage } from "@/components/LanguageProvider";
 
 export default function HomePage() {
+  const { t } = useLanguage();
+
   return (
     <div className="flex flex-1 flex-col">
       <header className="mb-8 text-center">
@@ -9,37 +14,30 @@ export default function HomePage() {
           <span className="text-3xl">🪞</span>
         </div>
         <h1 className="font-display text-3xl font-semibold tracking-tight text-text">
-          SecureSelf Mirror
+          {t.productName}
         </h1>
-        <p className="mt-2 text-text-muted">
-          Transform anxious messages into secure, grounded communication
-        </p>
+        <p className="mt-2 text-text-muted">{t.home.tagline}</p>
       </header>
 
       <Card className="mb-6">
-        <p className="leading-relaxed text-text">
-          When attachment anxiety hits, your messages can come from fear instead
-          of truth. This gentle space helps you pause, reflect, and rewrite —
-          so you communicate from your secure self, not your activated nervous
-          system.
-        </p>
+        <p className="leading-relaxed text-text">{t.home.intro}</p>
       </Card>
 
       <div className="mb-8 space-y-3">
         <FeatureItem
           emoji="💭"
-          title="Share your situation"
-          description="Describe what's happening in your relationship"
+          title={t.home.feature1Title}
+          description={t.home.feature1Desc}
         />
         <FeatureItem
           emoji="✍️"
-          title="Paste your draft message"
-          description="The text you're about to send (or already sent)"
+          title={t.home.feature2Title}
+          description={t.home.feature2Desc}
         />
         <FeatureItem
           emoji="🌸"
-          title="Receive secure guidance"
-          description="Pattern analysis, rewrite, boundaries & next steps"
+          title={t.home.feature3Title}
+          description={t.home.feature3Desc}
         />
       </div>
 
@@ -47,12 +45,10 @@ export default function HomePage() {
         href="/input"
         className="btn-primary mb-4 block py-4 text-center text-lg"
       >
-        Start Reflecting
+        {t.home.cta}
       </Link>
 
-      <p className="text-center text-xs text-text-muted">
-        You deserve relationships where you feel safe being yourself.
-      </p>
+      <p className="text-center text-xs text-text-muted">{t.home.closing}</p>
     </div>
   );
 }

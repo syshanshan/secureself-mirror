@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface CopyButtonProps {
   text: string;
-  label?: string;
 }
 
-export function CopyButton({ text, label = "Copy" }: CopyButtonProps) {
+export function CopyButton({ text }: CopyButtonProps) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -26,7 +27,7 @@ export function CopyButton({ text, label = "Copy" }: CopyButtonProps) {
       onClick={handleCopy}
       className="btn-secondary shrink-0 px-4 py-2 text-sm"
     >
-      {copied ? "Copied ✓" : label}
+      {copied ? t.copy.copied : t.copy.copy}
     </button>
   );
 }

@@ -2,24 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const navItems = [
-  { href: "/", label: "Home", icon: HomeIcon },
-  { href: "/input", label: "Reflect", icon: ReflectIcon },
-  { href: "/history", label: "History", icon: HistoryIcon },
-];
+import { useLanguage } from "@/components/LanguageProvider";
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const navItems = [
+    { href: "/", label: t.nav.home, icon: HomeIcon },
+    { href: "/input", label: t.nav.reflect, icon: ReflectIcon },
+    { href: "/history", label: t.nav.history, icon: HistoryIcon },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-blush-deep/30 bg-card/95 backdrop-blur-md">
       <div className="mx-auto flex max-w-lg items-center justify-around px-4 py-2">
         {navItems.map(({ href, label, icon: Icon }) => {
           const isActive =
-            href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(href);
+            href === "/" ? pathname === "/" : pathname.startsWith(href);
 
           return (
             <Link

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import { AppShell } from "@/components/layout/AppShell";
+import { LanguageProvider } from "@/components/LanguageProvider";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -39,7 +40,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dmSans.variable} ${fraunces.variable} antialiased`}>
-        <AppShell>{children}</AppShell>
+        <LanguageProvider>
+          <AppShell>{children}</AppShell>
+        </LanguageProvider>
       </body>
     </html>
   );

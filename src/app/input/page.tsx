@@ -4,11 +4,13 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader } from "@/components/Card";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useLanguage } from "@/components/LanguageProvider";
 import { buildLocalEntry, saveLocalEntry } from "@/lib/local-entries";
 import { getSessionId } from "@/lib/session";
 
 export default function InputPage() {
   const router = useRouter();
+  const { t, language } = useLanguage();
   const [situation, setSituation] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,7 +21,7 @@ export default function InputPage() {
     setError("");
 
     if (!situation.trim() || !message.trim()) {
-      setError("Please fill in both fields before continuing.");
+      setError(t.input.errorRequired);
       return;
     }
 
@@ -34,13 +36,14 @@ export default function InputPage() {
           situation: situation.trim(),
           message: message.trim(),
           sessionId,
+          language,
         }),
       });
 
       const data = await res.json();
 
       if (!data.success) {
-        throw new Error(data.error || "Analysis failed");
+        throw new Error(data.error || t.input.errorAnalysisFailed);
       }
 
       if (data.source === "local") {
@@ -57,36 +60,34 @@ export default function InputPage() {
 
       router.push(`/result/${data.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : t.input.errorGeneric);
       setLoading(false);
     }
   }
 
   if (loading) {
-    return <LoadingSpinner message="Your secure self is reflecting..." />;
+    return <LoadingSpinner message={t.input.loading} />;
   }
 
   return (
     <div className="flex flex-1 flex-col">
       <header className="mb-6">
         <h1 className="font-display text-2xl font-semibold text-text">
-          Reflect on Your Message
+          {t.input.title}
         </h1>
-        <p className="mt-1 text-sm text-text-muted">
-          Take a breath. There&apos;s no rush.
-        </p>
+        <p className="mt-1 text-sm text-text-muted">{t.input.subtitle}</p>
       </header>
 
       <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-5">
         <Card>
           <CardHeader
             icon={<span className="text-sm">💬</span>}
-            title="What's happening?"
-            subtitle="Briefly describe the relationship situation"
+            title={t.input.situationTitle}
+            subtitle={t.input.situationSubtitle}
           />
           <textarea
             className="input-field min-h-[100px] resize-none"
-            placeholder="e.g., We haven't talked in 2 days after a small disagreement..."
+            placeholder={t.input.situationPlaceholder}
             value={situation}
             onChange={(e) => setSituation(e.target.value)}
             maxLength={1000}
@@ -96,12 +97,12 @@ export default function InputPage() {
         <Card>
           <CardHeader
             icon={<span className="text-sm">✉️</span>}
-            title="Your draft message"
-            subtitle="What you want to send (or already sent)"
+            title={t.input.messageTitle}
+            subtitle={t.input.messageSubtitle}
           />
           <textarea
             className="input-field min-h-[140px] resize-none"
-            placeholder="e.g., Why haven't you responded? Do you even care about us anymore?"
+            placeholder={t.input.messagePlaceholder}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             maxLength={2000}
@@ -119,7 +120,7 @@ export default function InputPage() {
           disabled={!situation.trim() || !message.trim()}
           className="btn-primary mt-auto py-4 text-lg"
         >
-          Analyze My Message
+          {t.input.submit}
         </button>
       </form>
     </div>

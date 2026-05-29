@@ -1,12 +1,9 @@
+"use client";
+
+import { useLanguage } from "@/components/LanguageProvider";
+
 interface AnxietyScoreProps {
   score: number;
-}
-
-function scoreLabel(score: number): string {
-  if (score <= 25) return "Grounded";
-  if (score <= 50) return "Activated";
-  if (score <= 75) return "Anxious";
-  return "Highly activated";
 }
 
 function scoreColor(score: number): string {
@@ -17,6 +14,15 @@ function scoreColor(score: number): string {
 }
 
 export function AnxietyScore({ score }: AnxietyScoreProps) {
+  const { t } = useLanguage();
+
+  function scoreLabel(value: number): string {
+    if (value <= 25) return t.anxiety.grounded;
+    if (value <= 50) return t.anxiety.activated;
+    if (value <= 75) return t.anxiety.anxious;
+    return t.anxiety.highlyActivated;
+  }
+
   return (
     <div className="flex flex-col items-center gap-3 py-2">
       <div className="relative flex h-28 w-28 items-center justify-center">
@@ -46,10 +52,14 @@ export function AnxietyScore({ score }: AnxietyScoreProps) {
           <span className={`font-display text-3xl font-medium ${scoreColor(score)}`}>
             {score}
           </span>
-          <p className="text-[10px] uppercase tracking-wider text-text-muted">anxiety</p>
+          <p className="text-[10px] uppercase tracking-wider text-text-muted">
+            {t.anxiety.label}
+          </p>
         </div>
       </div>
-      <p className={`text-sm font-medium ${scoreColor(score)}`}>{scoreLabel(score)}</p>
+      <p className={`text-sm font-medium ${scoreColor(score)}`}>
+        {scoreLabel(score)}
+      </p>
     </div>
   );
 }

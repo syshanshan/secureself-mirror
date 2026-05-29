@@ -19,6 +19,7 @@ export interface AnalyzeRequest {
   situation: string;
   message: string;
   sessionId?: string;
+  language?: "en" | "zh";
 }
 
 export interface AnalyzeResponse {

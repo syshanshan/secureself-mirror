@@ -1,22 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeMessage } from "@/lib/openai";
 import { isSupabaseConfigured, saveMirrorEntry } from "@/lib/supabase";
+import { translations } from "@/lib/i18n/translations";
 import type { AnalyzeRequest } from "@/types/analysis";
+import type { Language } from "@/lib/i18n/types";
+
+function resolveLanguage(value: unknown): Language {
+  return value === "zh" ? "zh" : "en";
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as AnalyzeRequest;
+    const language = resolveLanguage(body.language);
+    const t = translations[language];
 
     if (!body.situation?.trim() || !body.message?.trim()) {
       return NextResponse.json(
-        { success: false, error: "Situation and message are required" },
+        { success: false, error: t.api.requiredFields },
         { status: 400 }
       );
     }
 
     const result = await analyzeMessage(
       body.situation.trim(),
-      body.message.trim()
+      body.message.trim(),
+      language
     );
 
     const sessionId = body.sessionId?.trim() || crypto.randomUUID();
@@ -57,7 +66,9 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error:
-          error instanceof Error ? error.message : "Failed to analyze message",
+          error instanceof Error
+            ? error.message
+            : translations.en.api.analysisFailed,
       },
       { status: 500 }
     );
