@@ -1,0 +1,55 @@
+interface AnxietyScoreProps {
+  score: number;
+}
+
+function scoreLabel(score: number): string {
+  if (score <= 25) return "Grounded";
+  if (score <= 50) return "Activated";
+  if (score <= 75) return "Anxious";
+  return "Highly activated";
+}
+
+function scoreColor(score: number): string {
+  if (score <= 25) return "text-sage";
+  if (score <= 50) return "text-rose";
+  if (score <= 75) return "text-rose-deep";
+  return "text-rose-deep";
+}
+
+export function AnxietyScore({ score }: AnxietyScoreProps) {
+  return (
+    <div className="flex flex-col items-center gap-3 py-2">
+      <div className="relative flex h-28 w-28 items-center justify-center">
+        <svg className="absolute inset-0 -rotate-90" viewBox="0 0 100 100">
+          <circle
+            cx="50"
+            cy="50"
+            r="42"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="8"
+            className="text-blush"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="42"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeDasharray={`${(score / 100) * 264} 264`}
+            className="text-rose transition-all duration-700"
+          />
+        </svg>
+        <div className="text-center">
+          <span className={`font-display text-3xl font-medium ${scoreColor(score)}`}>
+            {score}
+          </span>
+          <p className="text-[10px] uppercase tracking-wider text-text-muted">anxiety</p>
+        </div>
+      </div>
+      <p className={`text-sm font-medium ${scoreColor(score)}`}>{scoreLabel(score)}</p>
+    </div>
+  );
+}

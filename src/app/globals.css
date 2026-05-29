@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-cream: #fbf7f4;
+  --color-blush: #f3e8e4;
+  --color-blush-deep: #e8d5d0;
+  --color-rose: #c9a9a6;
+  --color-rose-deep: #a67f7a;
+  --color-sage: #9aab9e;
+  --color-warm: #4a3f3f;
+  --color-warm-muted: #7a6b68;
+  --color-text: #4a3f3f;
+  --color-text-muted: #7a6b68;
+  --color-card: #fffcfa;
+  --font-display: var(--font-fraunces);
+  --font-body: var(--font-dm-sans);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: linear-gradient(180deg, var(--color-cream) 0%, var(--color-blush) 100%);
+  color: var(--color-text);
+  font-family: var(--font-body), system-ui, sans-serif;
+  min-height: 100dvh;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--color-rose) 40%, transparent);
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-rose/20 bg-card p-5 shadow-[0_8px_30px_rgba(166,127,122,0.08)];
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-full bg-rose-deep px-6 py-3 text-sm font-medium text-cream shadow-[0_4px_20px_rgba(166,127,122,0.35)] transition active:scale-[0.98] hover:bg-rose disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-full border border-rose/30 bg-card px-6 py-3 text-sm font-medium text-text transition active:scale-[0.98] hover:border-rose/50 hover:bg-blush/40;
+  }
+
+  .input-field {
+    @apply w-full rounded-2xl border border-rose/25 bg-cream/50 px-4 py-3.5 text-sm text-text outline-none transition placeholder:text-text-muted/60 focus:border-rose/50 focus:ring-2 focus:ring-rose/20;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
