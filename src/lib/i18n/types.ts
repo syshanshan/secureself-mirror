@@ -65,6 +65,38 @@ export interface Translations {
     errorLoad: string;
     errorGeneric: string;
     anxietyLabel: string;
+    listTitle: string;
+    dashboard: {
+      title: string;
+      subtitle: string;
+      averageScore: string;
+      latestScore: string;
+      bestScore: string;
+      reflectionCount: string;
+      progressLabel: string;
+      scoreChange: string;
+      chartTitle: string;
+      trendEmpty: string;
+      milestoneTitle: string;
+      milestoneCount: string;
+      progressValues: {
+        improving: string;
+        stable: string;
+        moreActivated: string;
+      };
+      insights: {
+        improving: string;
+        stable: string;
+        moreActivated: string;
+      };
+      milestones: {
+        firstPause: string;
+        patternAwareness: string;
+        securePracticeHabit: string;
+        emotionalRegulationStreak: string;
+        secureCommunicationBuilder: string;
+      };
+    };
   };
   notFound: {
     title: string;

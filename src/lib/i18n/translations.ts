@@ -71,6 +71,42 @@ export const translations: Record<Language, Translations> = {
       errorLoad: "Failed to load history",
       errorGeneric: "Something went wrong",
       anxietyLabel: "anxiety",
+      listTitle: "Past reflections",
+      dashboard: {
+        title: "Growth Dashboard",
+        subtitle: "Track whether your communication is becoming more secure",
+        averageScore: "Average score",
+        latestScore: "Latest score",
+        bestScore: "Best score",
+        reflectionCount: "Reflections",
+        progressLabel: "Progress",
+        scoreChange: "Since first",
+        chartTitle: "Anxiety score over time",
+        trendEmpty:
+          "Complete at least two reflections to see your progress trend.",
+        milestoneTitle: "Secure growth milestones",
+        milestoneCount: "{count} reflections",
+        progressValues: {
+          improving: "Improving",
+          stable: "Stable",
+          moreActivated: "More activated",
+        },
+        insights: {
+          improving:
+            "Your anxiety score has decreased by {points} points since your first reflection. This may suggest you are becoming more grounded in how you express your needs.",
+          stable:
+            "Your anxiety score has stayed within {points} points of your first reflection. Steady awareness is part of secure growth.",
+          moreActivated:
+            "Your anxiety score has increased by {points} points since your first reflection. This may be a moment to pause and notice what activated your attachment system.",
+        },
+        milestones: {
+          firstPause: "First pause",
+          patternAwareness: "Pattern awareness",
+          securePracticeHabit: "Secure practice habit",
+          emotionalRegulationStreak: "Emotional regulation streak",
+          secureCommunicationBuilder: "Secure communication builder",
+        },
+      },
     },
     notFound: {
       title: "Not found",
@@ -161,6 +197,41 @@ export const translations: Record<Language, Translations> = {
       errorLoad: "加载历史失败",
       errorGeneric: "出了点问题",
       anxietyLabel: "焦虑",
+      listTitle: "历史记录",
+      dashboard: {
+        title: "成长仪表盘",
+        subtitle: "看看你的沟通是否正在变得更安全、更稳定",
+        averageScore: "平均分数",
+        latestScore: "最近分数",
+        bestScore: "最低分数",
+        reflectionCount: "练习次数",
+        progressLabel: "进展",
+        scoreChange: "相较第一次",
+        chartTitle: "焦虑分数变化",
+        trendEmpty: "完成至少两次练习后，你就可以看到自己的变化趋势。",
+        milestoneTitle: "安全型成长里程碑",
+        milestoneCount: "{count} 次练习",
+        progressValues: {
+          improving: "正在改善",
+          stable: "保持稳定",
+          moreActivated: "更加激活",
+        },
+        insights: {
+          improving:
+            "从第一次练习到现在，你的焦虑表达分数下降了 {points} 分。这可能说明你正在更稳定地表达需求，而不是从恐惧出发。",
+          stable:
+            "你的焦虑分数与第一次相比变化在 {points} 分以内。持续觉察本身就是安全型成长的一部分。",
+          moreActivated:
+            "从第一次练习到现在，你的焦虑表达分数上升了 {points} 分。这也许是一个暂停、觉察依恋系统被激活的好时机。",
+        },
+        milestones: {
+          firstPause: "第一次暂停",
+          patternAwareness: "看见模式",
+          securePracticeHabit: "安全型练习习惯",
+          emotionalRegulationStreak: "情绪调节连续练习",
+          secureCommunicationBuilder: "安全型沟通构建者",
+        },
+      },
     },
     notFound: {
       title: "未找到",

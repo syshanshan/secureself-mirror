@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/Card";
+import { GrowthDashboard } from "@/components/history/GrowthDashboard";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getLocalEntries } from "@/lib/local-entries";
@@ -78,35 +79,42 @@ export default function HistoryPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-3">
-          {entries.map((item) => (
-            <Link key={item.id} href={`/result/${item.id}`}>
-              <Card className="transition-transform hover:-translate-y-0.5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-text">
-                      {item.situation}
-                    </p>
-                    <p className="mt-1 truncate text-xs text-text-muted italic">
-                      &ldquo;{item.originalMessage}&rdquo;
-                    </p>
-                    <p className="mt-2 text-xs text-text-muted">
-                      {formatDate(item.createdAt, language)}
-                    </p>
+        <>
+          <GrowthDashboard entries={entries} />
+
+          <h2 className="mb-3 font-display text-lg font-semibold text-text">
+            {t.history.listTitle}
+          </h2>
+          <div className="space-y-3">
+            {entries.map((item) => (
+              <Link key={item.id} href={`/result/${item.id}`}>
+                <Card className="transition-transform hover:-translate-y-0.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-text">
+                        {item.situation}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-text-muted italic">
+                        &ldquo;{item.originalMessage}&rdquo;
+                      </p>
+                      <p className="mt-2 text-xs text-text-muted">
+                        {formatDate(item.createdAt, language)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-center">
+                      <span className="font-display text-xl font-semibold text-rose-deep">
+                        {item.anxietyScore}
+                      </span>
+                      <span className="text-[10px] text-text-muted">
+                        {t.history.anxietyLabel}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 flex-col items-center">
-                    <span className="font-display text-xl font-semibold text-rose-deep">
-                      {item.anxietyScore}
-                    </span>
-                    <span className="text-[10px] text-text-muted">
-                      {t.history.anxietyLabel}
-                    </span>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
