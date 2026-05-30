@@ -84,10 +84,9 @@ export const translations: Record<Language, Translations> = {
     anxiety: {
       label: "anxiety",
       secure: "Secure",
-      mild: "Mild activation",
-      moderate: "Moderate anxiety",
-      high: "High anxiety",
-      veryHigh: "Very high anxiety",
+      mild: "Mildly activated",
+      anxious: "Anxious",
+      highlyAnxious: "Highly anxious",
     },
     api: {
       requiredFields: "Situation and message are required",
@@ -175,10 +174,9 @@ export const translations: Record<Language, Translations> = {
     anxiety: {
       label: "焦虑",
       secure: "安全型",
-      mild: "轻度激活",
-      moderate: "中度焦虑",
-      high: "高度焦虑",
-      veryHigh: "极高焦虑",
+      mild: "轻微激活",
+      anxious: "焦虑型",
+      highlyAnxious: "高度焦虑",
     },
     api: {
       requiredFields: "请填写情况和信息",

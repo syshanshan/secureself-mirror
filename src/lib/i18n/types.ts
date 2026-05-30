@@ -79,9 +79,8 @@ export interface Translations {
     label: string;
     secure: string;
     mild: string;
-    moderate: string;
-    high: string;
-    veryHigh: string;
+    anxious: string;
+    highlyAnxious: string;
   };
   api: {
     requiredFields: string;

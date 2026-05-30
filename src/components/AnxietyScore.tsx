@@ -7,9 +7,9 @@ interface AnxietyScoreProps {
 }
 
 function scoreColor(score: number): string {
-  if (score <= 20) return "text-sage";
-  if (score <= 40) return "text-sage";
-  if (score <= 60) return "text-rose";
+  if (score <= 30) return "text-sage";
+  if (score <= 50) return "text-sage";
+  if (score <= 75) return "text-rose";
   return "text-rose-deep";
 }
 
@@ -17,11 +17,10 @@ export function AnxietyScore({ score }: AnxietyScoreProps) {
   const { t } = useLanguage();
 
   function scoreLabel(value: number): string {
-    if (value <= 20) return t.anxiety.secure;
-    if (value <= 40) return t.anxiety.mild;
-    if (value <= 60) return t.anxiety.moderate;
-    if (value <= 80) return t.anxiety.high;
-    return t.anxiety.veryHigh;
+    if (value <= 30) return t.anxiety.secure;
+    if (value <= 50) return t.anxiety.mild;
+    if (value <= 75) return t.anxiety.anxious;
+    return t.anxiety.highlyAnxious;
   }
 
   return (
