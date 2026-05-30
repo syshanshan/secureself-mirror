@@ -77,10 +77,11 @@ export interface Translations {
   };
   anxiety: {
     label: string;
-    grounded: string;
-    activated: string;
-    anxious: string;
-    highlyActivated: string;
+    secure: string;
+    mild: string;
+    moderate: string;
+    high: string;
+    veryHigh: string;
   };
   api: {
     requiredFields: string;

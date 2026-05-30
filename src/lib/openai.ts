@@ -2,24 +2,34 @@ import OpenAI from "openai";
 import type { AnalysisResult } from "@/types/analysis";
 import type { Language } from "@/lib/i18n/types";
 import { getMockAnalysis } from "@/lib/mock-analysis";
+import {
+  ANALYSIS_QUALITY_RULES,
+  CHINESE_ANALYSIS_RULES,
+  SCORING_RUBRIC,
+} from "@/lib/scoring-rubric";
 
 const SYSTEM_PROMPT = `You are a compassionate attachment-focused communication coach helping people with anxious attachment patterns transform their relationship messages into secure, grounded communication.
 
 Analyze the user's relationship situation and draft message. Return ONLY valid JSON matching this exact schema:
 {
-  "anxiousPatternAnalysis": "string — 2-4 sentences naming specific anxious patterns you notice (e.g. protest behavior, mind-reading, reassurance-seeking, catastrophizing) with warmth and zero shame",
-  "anxietyScore": number — integer 0-100 reflecting how activated/anxious the draft message reads,
-  "secureRewrite": "string — a rewritten message in secure attachment tone: clear, direct, emotionally honest, non-punitive, no ultimatums unless truly needed",
-  "boundaryStatement": "string — one calm boundary the user can hold if needed, in first person",
-  "suggestedNextAction": "string — one concrete, kind next step (not chasing or testing)",
-  "whatNotToDo": "string — 2-3 bullet-style behaviors to avoid, separated by semicolons"
+  "anxiousPatternAnalysis": "string — 2-4 sentences. Name specific patterns ONLY if present; cite phrases from the message. If the message is secure, affirm what works. Warm, zero shame.",
+  "anxietyScore": number — integer 0-100 using the rubric below,
+  "secureRewrite": "string — rewritten message in secure tone. If already secure, a light polish is enough.",
+  "boundaryStatement": "string — one calm boundary in first person",
+  "suggestedNextAction": "string — one concrete, kind next step",
+  "whatNotToDo": "string — 2-3 behaviors to avoid, separated by semicolons (only those relevant to THIS message)"
 }
 
-Guidelines:
+${SCORING_RUBRIC}
+
+${ANALYSIS_QUALITY_RULES}
+
+${CHINESE_ANALYSIS_RULES}
+
+Additional guidelines:
 - Be warm, validating, and non-judgmental
 - Never diagnose or use clinical labels harshly
 - Keep secure rewrite natural and sendable (not therapy-speak)
-- anxietyScore: 0 = very secure/calm, 100 = highly anxious/activated
 - Write ALL string values in the language specified by the user (English or Chinese)`;
 
 function buildUserPrompt(
@@ -29,10 +39,12 @@ function buildUserPrompt(
 ): string {
   const languageInstruction =
     language === "zh"
-      ? "Respond in Simplified Chinese (简体中文) for all string fields."
+      ? "Respond in Simplified Chinese (简体中文) for all string fields. Apply the Chinese analysis distinctions above."
       : "Respond in English for all string fields.";
 
   return `${languageInstruction}
+
+Before scoring, ask: Does this message pressure, blame, or chase reassurance — or does it calmly express interest while leaving choice with the other person? Score accordingly.
 
 Relationship situation:
 ${situation}
@@ -68,7 +80,7 @@ async function callOpenAI(
 
   const completion = await openai.chat.completions.create({
     model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-    temperature: 0.7,
+    temperature: 0.5,
     response_format: { type: "json_object" },
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
@@ -102,13 +114,13 @@ export async function analyzeMessage(
 ): Promise<AnalysisResult> {
   if (!process.env.OPENAI_API_KEY) {
     console.warn("OPENAI_API_KEY not set — using mock analysis");
-    return getMockAnalysis(language);
+    return getMockAnalysis(situation, originalMessage, language);
   }
 
   try {
     return await callOpenAI(situation, originalMessage, language);
   } catch (error) {
     console.error("OpenAI analysis failed — falling back to mock:", error);
-    return getMockAnalysis(language);
+    return getMockAnalysis(situation, originalMessage, language);
   }
 }

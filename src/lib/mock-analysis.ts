@@ -1,34 +1,196 @@
 import type { AnalysisResult } from "@/types/analysis";
 import type { Language } from "@/lib/i18n/types";
 
-const MOCK_ANALYSIS_EN: AnalysisResult = {
-  anxietyScore: 68,
-  anxiousPatternAnalysis:
-    "Your message shows protest behavior and reassurance-seeking — common when uncertainty spikes after a gap in contact. The tone suggests mind-reading (assuming their silence means disinterest) and urgency to resolve anxiety through immediate reply. This is your attachment system asking for safety, not a character flaw.",
-  secureRewrite:
-    "Hey — I noticed we haven't connected in a couple of days and I felt a little unsettled. I'm not looking to pressure you; I'd just appreciate a quick check-in when you have space. How are you doing?",
-  boundaryStatement:
-    "I can tolerate not knowing for a little while without chasing reassurance. My peace doesn't depend on an instant response.",
-  suggestedNextAction:
-    "Put the phone down for 20 minutes, do something grounding (walk, shower, stretch), then re-read your secure rewrite and send only if it still feels true.",
-  whatNotToDo:
-    "Avoid double-texting or sending a longer follow-up; don't re-read old messages for hidden meaning; don't make their response speed mean something about your worth.",
-};
+const SECURE_SIGNALS = [
+  "maybe",
+  "if you're open",
+  "if you are open",
+  "when you have time",
+  "no pressure",
+  "no rush",
+  "if you want",
+  "up to you",
+  "your choice",
+  "would you like",
+  "i'd love to",
+  "if you're free",
+  "open to it",
+  "maybe we could",
+  "如果你愿意",
+  "如果你有空",
+  "不着急",
+  "没关系",
+  "看你",
+  "方便的话",
+  "也许",
+  "如果你愿意的话",
+];
 
-const MOCK_ANALYSIS_ZH: AnalysisResult = {
-  anxietyScore: 68,
-  anxiousPatternAnalysis:
-    "你的信息显示出抗议行为和寻求安抚的倾向——在联系中断、不确定性上升时这很常见。语气中有读心（把对方的沉默理解为不在乎）以及希望通过立刻得到回复来缓解焦虑。这是你的依恋系统在寻求安全感，而不是性格缺陷。",
-  secureRewrite:
-    "嗨——我注意到我们已经有几天没联系了，我有点不安。我不是要逼你回复，只是希望你有空时能简单报个平安。你最近怎么样？",
-  boundaryStatement:
-    "我可以承受短暂的不确定，而不去追逐安抚。我的平静不取决于对方是否立刻回复。",
-  suggestedNextAction:
-    "先把手机放下 20 分钟，做一件让你落地的事（散步、洗澡、拉伸），再读一遍安全型重写，只有仍觉得真实时才发送。",
-  whatNotToDo:
-    "避免连环发送或追加更长信息；不要反复读旧消息寻找隐藏含义；不要把回复速度等同于你的价值。",
-};
+const HIGH_ANXIETY_SIGNALS = [
+  "why haven't you",
+  "why wont you",
+  "why won't you",
+  "do you even care",
+  "you never",
+  "you always",
+  "ignore me",
+  "read my message",
+  "answer me",
+  "please please",
+  "i need you to",
+  "or else",
+  "if you loved me",
+  "你怎么还不",
+  "你到底",
+  "不在乎",
+  "为什么不回",
+  "已读不回",
+  "求你了",
+  "是不是不爱",
+  "最后一次",
+];
 
-export function getMockAnalysis(language: Language = "en"): AnalysisResult {
-  return language === "zh" ? MOCK_ANALYSIS_ZH : MOCK_ANALYSIS_EN;
+const MODERATE_ANXIETY_SIGNALS = [
+  "where are you",
+  "are you mad",
+  "did i do something",
+  "just checking in again",
+  "following up",
+  "need to know",
+  "where do we stand",
+  "还在吗",
+  "生气了吗",
+  "是不是我做错了",
+  "再确认一下",
+  "我们到底什么关系",
+];
+
+function countMatches(text: string, phrases: string[]): number {
+  const lower = text.toLowerCase();
+  return phrases.filter((p) => lower.includes(p.toLowerCase())).length;
+}
+
+function estimateAnxietyScore(message: string): number {
+  const lower = message.toLowerCase();
+  const questionMarks = (message.match(/\?/g) || []).length;
+  const exclamations = (message.match(/!/g) || []).length;
+  const secureHits = countMatches(message, SECURE_SIGNALS);
+  const highHits = countMatches(message, HIGH_ANXIETY_SIGNALS);
+  const moderateHits = countMatches(message, MODERATE_ANXIETY_SIGNALS);
+
+  if (secureHits >= 2 && highHits === 0 && moderateHits === 0) {
+    return Math.min(25, Math.max(15, 16 + secureHits));
+  }
+
+  let score = 28;
+
+  if (secureHits >= 1 && highHits === 0 && moderateHits === 0) {
+    score = 22;
+  }
+
+  score += highHits * 18;
+  score += moderateHits * 12;
+  score += Math.max(0, questionMarks - 1) * 6;
+  score += exclamations * 5;
+
+  if (/\b(please|sorry)\b.*\b(please|sorry)\b/i.test(lower)) score += 10;
+  if (message.length > 400) score += 8;
+
+  score -= secureHits * 3;
+
+  return Math.min(100, Math.max(12, Math.round(score)));
+}
+
+function buildPatternAnalysis(
+  message: string,
+  score: number,
+  language: Language
+): string {
+  const secureHits = countMatches(message, SECURE_SIGNALS);
+  const highHits = countMatches(message, HIGH_ANXIETY_SIGNALS);
+
+  if (language === "zh") {
+    if (score <= 20) {
+      return secureHits > 0
+        ? "这条信息整体偏安全型：语气尊重、给对方留有选择空间（如邀请式表达），没有指责或追讨回复。这是在表达连接需求，而不是焦虑型抗议行为。"
+        : "这条信息整体偏安全型：表达清晰、语气平稳，没有明显的指责、追讨或情绪绑架。";
+    }
+    if (score <= 40) {
+      return "信息里有一些情感需求，但整体仍算尊重。可以留意是否隐含「希望对方立刻回应」的期待，目前尚未构成明显的抗议行为。";
+    }
+    if (highHits > 0) {
+      return "信息中有较明显的焦虑型抗议信号——如追讨、读心或指责——这通常反映的是对连接的安全感不足，而不是你「有问题」。";
+    }
+    return "信息中有一定的间接压力或隐性期待（例如希望对方读懂你的情绪）。这不是失败，只是依恋系统在被激活。";
+  }
+
+  if (score <= 20) {
+    return secureHits > 0
+      ? "This reads largely secure: respectful tone, choice left with the other person, and no blame or reassurance-chasing. Expressing interest this way is healthy connection — not anxious protest."
+      : "This reads largely secure: calm, direct, and without blame, urgency, or repeated reassurance-seeking.";
+  }
+  if (score <= 40) {
+    return "There is some visible emotional need here, but the tone still mostly respects the other person's space. Watch for hidden expectations — protest behavior isn't dominant yet.";
+  }
+  if (highHits > 0) {
+    return "This message shows anxious protest signals — such as chasing a reply, mind-reading, or blame. That reflects activation and a longing for safety, not a character flaw.";
+  }
+  return "There are signs of indirect pressure or mild reassurance-seeking. Your attachment system may be asking for certainty — naming that is the first step to responding differently.";
+}
+
+function buildMockResult(
+  situation: string,
+  message: string,
+  language: Language
+): AnalysisResult {
+  const score = estimateAnxietyScore(message);
+
+  if (language === "zh") {
+    return {
+      anxietyScore: score,
+      anxiousPatternAnalysis: buildPatternAnalysis(message, score, "zh"),
+      secureRewrite:
+        score <= 25
+          ? message.trim()
+          : "我注意到我们最近联系少了，我有点在意。你方便的时候能简单聊几句吗？不着急，你按自己的节奏来就好。",
+      boundaryStatement:
+        "我可以表达想念或需求，同时尊重对方的选择与节奏。",
+      suggestedNextAction:
+        score <= 25
+          ? "如果这条信息仍然让你感到真实、平静，可以发送；发送后去做一件让你落地的事。"
+          : "发送前先读一遍：有没有给对方留选择？把信息缩短到两三句，再决定是否发送。",
+      whatNotToDo:
+        score <= 25
+          ? "不必因为表达需求而二次道歉；不要追加「你怎么还不回」类追问。"
+          : "避免连环发送；不要反复读旧消息找隐藏含义；不要用沉默或撤回来测试对方。",
+    };
+  }
+
+  return {
+    anxietyScore: score,
+    anxiousPatternAnalysis: buildPatternAnalysis(message, score, "en"),
+    secureRewrite:
+      score <= 25
+        ? message.trim()
+        : "I've noticed some distance lately and I feel a little unsettled. When you have space, I'd appreciate a brief check-in — no rush on your end.",
+    boundaryStatement:
+      "I can express my needs while respecting the other person's choice and timing.",
+    suggestedNextAction:
+      score <= 25
+        ? "If this still feels true and calm, you can send it — then do something grounding afterward."
+        : "Before sending, read it once: does it leave them choice? Trim to 2–3 sentences, then decide.",
+    whatNotToDo:
+      score <= 25
+        ? "Don't apologize twice for having a need; avoid adding a follow-up like 'why haven't you replied?'"
+        : "Avoid double-texting; don't re-read old threads for hidden meaning; don't test them with silence or unsending.",
+  };
+}
+
+export function getMockAnalysis(
+  situation: string,
+  message: string,
+  language: Language = "en"
+): AnalysisResult {
+  void situation;
+  return buildMockResult(situation, message, language);
 }
