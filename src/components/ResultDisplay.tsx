@@ -5,6 +5,7 @@ import { Card } from "@/components/Card";
 import type { AnalysisResult } from "@/types/analysis";
 import { AnxietyScore } from "@/components/AnxietyScore";
 import { CopyButton } from "@/components/CopyButton";
+import { EmotionRecognition } from "@/components/EmotionRecognition";
 import { useLanguage } from "@/components/LanguageProvider";
 
 interface ResultDisplayProps {
@@ -24,6 +25,8 @@ export function ResultDisplay({
 
   return (
     <div className="space-y-4 animate-fade-in-up">
+      <EmotionRecognition emotions={result.emotions ?? []} />
+
       <Card>
         <AnxietyScore score={result.anxietyScore} />
       </Card>

@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import type { AnalysisResult } from "@/types/analysis";
 import type { Language } from "@/lib/i18n/types";
 import { getMockAnalysis } from "@/lib/mock-analysis";
+import { normalizeEmotions } from "@/lib/normalize-emotions";
 import {
   ANALYSIS_QUALITY_RULES,
   CHINESE_ANALYSIS_RULES,
@@ -12,6 +13,7 @@ const SYSTEM_PROMPT = `You are a compassionate attachment-focused communication 
 
 Analyze the user's relationship situation and draft message. Return ONLY valid JSON matching this exact schema:
 {
+  "emotions": ["string"] — 3-5 brief, compassionate feeling labels the user may be experiencing underneath this message (e.g. "被遗弃", "焦虑", "不确定", "想重新建立连接" in Chinese; "abandoned", "anxious", "uncertain", "longing to reconnect" in English). Validating and specific to THIS message — not generic. Write in the user's requested language.",
   "anxiousPatternAnalysis": "string — 2-4 sentences. Name specific patterns ONLY if present; cite phrases from the message. If the message is secure, affirm what works. Warm, zero shame.",
   "anxietyScore": number — integer 0-100 using the rubric below,
   "secureRewrite": "string — rewritten message in secure tone. If already secure, a light polish is enough.",
@@ -103,6 +105,7 @@ async function callOpenAI(
 
   return {
     ...parsed,
+    emotions: normalizeEmotions(parsed.emotions),
     anxietyScore: Math.min(100, Math.max(0, Math.round(parsed.anxietyScore))),
   };
 }

@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { normalizeEmotions } from "@/lib/normalize-emotions";
 import type { MirrorEntry } from "@/types/analysis";
 
 function getSupabaseUrl() {
@@ -44,6 +45,7 @@ export async function saveMirrorEntry(input: SaveEntryInput): Promise<string | n
       original_message: input.originalMessage,
       anxious_pattern_analysis: input.result.anxiousPatternAnalysis,
       anxiety_score: input.result.anxietyScore,
+      emotions: input.result.emotions,
       secure_rewrite: input.result.secureRewrite,
       boundary_statement: input.result.boundaryStatement,
       suggested_next_action: input.result.suggestedNextAction,
@@ -101,6 +103,7 @@ function mapRowToEntry(row: Record<string, unknown>): MirrorEntry {
     originalMessage: row.original_message as string,
     anxiousPatternAnalysis: row.anxious_pattern_analysis as string,
     anxietyScore: row.anxiety_score as number,
+    emotions: normalizeEmotions(row.emotions),
     secureRewrite: row.secure_rewrite as string,
     boundaryStatement: row.boundary_statement as string,
     suggestedNextAction: row.suggested_next_action as string,

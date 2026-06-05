@@ -45,6 +45,9 @@ export interface Translations {
     notFoundTitle: string;
     notFoundDesc: string;
     notFoundCta: string;
+    emotionTitle: string;
+    emotionSubtitle: string;
+    emotionHint: string;
     patternAnalysis: string;
     secureRewrite: string;
     boundaryStatement: string;

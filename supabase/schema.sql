@@ -12,6 +12,7 @@ create table if not exists public.mirror_entries (
   boundary_statement text not null,
   suggested_next_action text not null,
   what_not_to_do text not null,
+  emotions jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now()
 );
 

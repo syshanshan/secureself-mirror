@@ -40,13 +40,6 @@ export function GrowthDashboard({ entries }: GrowthDashboardProps) {
         <p className="mt-0.5 text-sm text-text-muted">{d.subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <MetricCard label={d.averageScore} value={String(stats.averageScore)} />
-        <MetricCard label={d.latestScore} value={String(stats.latestScore)} />
-        <MetricCard label={d.bestScore} value={String(stats.bestScore)} />
-        <MetricCard label={d.reflectionCount} value={String(stats.count)} />
-      </div>
-
       <Card className="bg-gradient-to-br from-card to-blush/20">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -107,10 +100,7 @@ export function GrowthDashboard({ entries }: GrowthDashboardProps) {
                       borderRadius: "12px",
                       fontSize: "12px",
                     }}
-                    formatter={(value) => [
-                      value,
-                      t.history.anxietyLabel,
-                    ]}
+                    formatter={(value) => [value, t.history.anxietyLabel]}
                     labelFormatter={(label) =>
                       formatChartLabel(Number(label), language)
                     }
@@ -139,6 +129,13 @@ export function GrowthDashboard({ entries }: GrowthDashboardProps) {
           <p className="text-sm text-text-muted">{d.trendEmpty}</p>
         </Card>
       )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <MetricCard label={d.averageScore} value={String(stats.averageScore)} />
+        <MetricCard label={d.latestScore} value={String(stats.latestScore)} />
+        <MetricCard label={d.bestScore} value={String(stats.bestScore)} />
+        <MetricCard label={d.reflectionCount} value={String(stats.count)} />
+      </div>
 
       <Card>
         <p className="mb-3 text-sm font-medium text-text">{d.milestoneTitle}</p>

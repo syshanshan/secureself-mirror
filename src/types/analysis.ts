@@ -1,4 +1,5 @@
 export interface AnalysisResult {
+  emotions: string[];
   anxiousPatternAnalysis: string;
   anxietyScore: number;
   secureRewrite: string;

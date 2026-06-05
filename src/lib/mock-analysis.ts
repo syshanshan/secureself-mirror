@@ -138,6 +138,28 @@ function buildPatternAnalysis(
   return "There are signs of indirect pressure or mild reassurance-seeking. Your attachment system may be asking for certainty — naming that is the first step to responding differently.";
 }
 
+function buildMockEmotions(message: string, score: number, language: Language): string[] {
+  const highHits = countMatches(message, HIGH_ANXIETY_SIGNALS);
+
+  if (language === "zh") {
+    if (score <= 30 && highHits === 0) {
+      return ["惦记", "温和的不确定", "想保持联系", "希望被看见"];
+    }
+    if (score <= 50) {
+      return ["焦虑", "不确定", "想重新建立连接", "怕被疏远"];
+    }
+    return ["被遗弃", "焦虑", "不确定", "想重新建立连接"];
+  }
+
+  if (score <= 30 && highHits === 0) {
+    return ["hopeful", "gentle uncertainty", "longing to connect", "wanting to be seen"];
+  }
+  if (score <= 50) {
+    return ["anxious", "uncertain", "longing to reconnect", "fear of distance"];
+  }
+  return ["abandoned", "anxious", "uncertain", "longing to reconnect"];
+}
+
 function buildMockResult(
   situation: string,
   message: string,
@@ -147,6 +169,7 @@ function buildMockResult(
 
   if (language === "zh") {
     return {
+      emotions: buildMockEmotions(message, score, "zh"),
       anxietyScore: score,
       anxiousPatternAnalysis: buildPatternAnalysis(message, score, "zh"),
       secureRewrite:
@@ -167,6 +190,7 @@ function buildMockResult(
   }
 
   return {
+    emotions: buildMockEmotions(message, score, "en"),
     anxietyScore: score,
     anxiousPatternAnalysis: buildPatternAnalysis(message, score, "en"),
     secureRewrite:
