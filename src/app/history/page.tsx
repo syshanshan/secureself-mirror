@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card } from "@/components/Card";
 import { GrowthDashboard } from "@/components/history/GrowthDashboard";
+import { HistoryEntryCard } from "@/components/history/HistoryEntryCard";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getLocalEntries } from "@/lib/local-entries";
+import { mergeHistoryEntries } from "@/lib/merge-action-tracking";
+import { normalizeMirrorEntry } from "@/lib/normalize-mirror-entry";
 import { getSessionId } from "@/lib/session";
 import type { MirrorEntry } from "@/types/analysis";
 
@@ -18,33 +20,54 @@ export default function HistoryPage() {
 
   useEffect(() => {
     async function loadHistory() {
+      const sessionId = getSessionId();
+      const sessionLocal = getLocalEntries().filter(
+        (entry) => entry.sessionId === sessionId
+      );
+
       try {
-        const sessionId = getSessionId();
         const res = await fetch(
           `/api/history?sessionId=${sessionId}&language=${language}`
         );
         const data = await res.json();
 
-        if (!data.success) {
-          throw new Error(data.error || t.history.errorLoad);
+        let loaded: MirrorEntry[] = [];
+
+        if (data.success && data.source === "supabase") {
+          loaded = mergeHistoryEntries(
+            (data.entries ?? []).map((entry: MirrorEntry) =>
+              normalizeMirrorEntry(entry)
+            ),
+            sessionLocal
+          );
+        } else if (data.success) {
+          loaded = sessionLocal;
+        } else {
+          console.warn("History API failed, using localStorage only", data.error);
+          loaded = sessionLocal;
         }
 
-        if (data.source === "supabase") {
-          setEntries(data.entries ?? []);
-        } else {
-          setEntries(
-            getLocalEntries().filter((entry) => entry.sessionId === sessionId)
-          );
-        }
+        const completedEntries = loaded.filter(
+          (entry) => entry.actionCompleted === true
+        );
+        console.log("Completed action entries", completedEntries);
+        setEntries(loaded);
+        setError("");
       } catch (err) {
-        setError(err instanceof Error ? err.message : t.history.errorGeneric);
+        console.warn("History load failed, using localStorage only", err);
+        if (sessionLocal.length > 0) {
+          setEntries(sessionLocal);
+          setError("");
+        } else {
+          setError(err instanceof Error ? err.message : t.history.errorGeneric);
+        }
       } finally {
         setLoading(false);
       }
     }
 
     loadHistory();
-  }, [language, t.history.errorGeneric, t.history.errorLoad]);
+  }, [language, t.history.errorGeneric]);
 
   if (loading) {
     return <LoadingSpinner message={t.history.loading} />;
@@ -87,31 +110,11 @@ export default function HistoryPage() {
           </h2>
           <div className="space-y-3">
             {entries.map((item) => (
-              <Link key={item.id} href={`/result/${item.id}`}>
-                <Card className="transition-transform hover:-translate-y-0.5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-text">
-                        {item.situation}
-                      </p>
-                      <p className="mt-1 truncate text-xs text-text-muted italic">
-                        &ldquo;{item.originalMessage}&rdquo;
-                      </p>
-                      <p className="mt-2 text-xs text-text-muted">
-                        {formatDate(item.createdAt, language)}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 flex-col items-center">
-                      <span className="font-display text-xl font-semibold text-rose-deep">
-                        {item.anxietyScore}
-                      </span>
-                      <span className="text-[10px] text-text-muted">
-                        {t.history.anxietyLabel}
-                      </span>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
+              <HistoryEntryCard
+                key={item.id}
+                entry={item}
+                formattedDate={formatDate(item.createdAt, language)}
+              />
             ))}
           </div>
         </>

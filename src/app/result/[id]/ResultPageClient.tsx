@@ -7,6 +7,8 @@ import { ResultDisplay } from "@/components/ResultDisplay";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getLocalEntryById } from "@/lib/local-entries";
+import { mergeActionTracking } from "@/lib/merge-action-tracking";
+import { normalizeMirrorEntry } from "@/lib/normalize-mirror-entry";
 import type { MirrorEntry } from "@/types/analysis";
 
 interface ResultPageClientProps {
@@ -14,25 +16,45 @@ interface ResultPageClientProps {
   entry?: MirrorEntry;
 }
 
+function resolveEntry(id: string, serverEntry?: MirrorEntry): MirrorEntry | null {
+  const localEntry = getLocalEntryById(id);
+
+  if (serverEntry) {
+    return mergeActionTracking(
+      normalizeMirrorEntry(serverEntry),
+      localEntry
+    );
+  }
+
+  return localEntry;
+}
+
 export function ResultPageClient({ id, entry: serverEntry }: ResultPageClientProps) {
   const router = useRouter();
   const { t } = useLanguage();
-  const [entry, setEntry] = useState<MirrorEntry | null>(serverEntry ?? null);
-  const [loading, setLoading] = useState(!serverEntry);
+  const [entry, setEntry] = useState<MirrorEntry | null>(() =>
+    resolveEntry(id, serverEntry)
+  );
+  const [loading, setLoading] = useState(!serverEntry && id.startsWith("local-"));
 
   useEffect(() => {
-    if (serverEntry) return;
+    const resolved = resolveEntry(id, serverEntry);
+
+    if (resolved) {
+      setEntry(resolved);
+      setLoading(false);
+      return;
+    }
 
     if (id.startsWith("local-")) {
-      const localEntry = getLocalEntryById(id);
-      if (localEntry) {
-        setEntry(localEntry);
-      } else {
-        router.replace("/input");
-      }
+      router.replace("/input");
       setLoading(false);
     }
   }, [id, router, serverEntry]);
+
+  function handleEntryUpdate(updated: MirrorEntry) {
+    setEntry(updated);
+  }
 
   if (loading) {
     return <LoadingSpinner message={t.result.loading} />;
@@ -62,11 +84,7 @@ export function ResultPageClient({ id, entry: serverEntry }: ResultPageClientPro
         <p className="mt-1 text-sm text-text-muted">{t.result.subtitle}</p>
       </header>
 
-      <ResultDisplay
-        result={entry}
-        situation={entry.situation}
-        originalMessage={entry.originalMessage}
-      />
+      <ResultDisplay entry={entry} onEntryUpdate={handleEntryUpdate} />
     </div>
   );
 }

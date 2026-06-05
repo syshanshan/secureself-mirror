@@ -1,4 +1,11 @@
-import type { AnalysisResult, MirrorEntry } from "@/types/analysis";
+import { EMPTY_ACTION_TRACKING } from "@/lib/action-defaults";
+import { computeAnxietyReduction } from "@/lib/action-anxiety";
+import { normalizeMirrorEntry } from "@/lib/normalize-mirror-entry";
+import type {
+  AnalysisResult,
+  CompleteActionRequest,
+  MirrorEntry,
+} from "@/types/analysis";
 
 const STORAGE_KEY = "secureself_mirror_entries";
 
@@ -13,30 +20,86 @@ export function createLocalEntryId(): string {
 export function saveLocalEntry(
   entry: Omit<MirrorEntry, "createdAt"> & { createdAt?: string }
 ): MirrorEntry {
-  const fullEntry: MirrorEntry = {
+  const fullEntry = normalizeMirrorEntry({
     ...entry,
     createdAt: entry.createdAt ?? new Date().toISOString(),
-  };
+  });
 
-  const existing = getLocalEntries();
-  const next = [fullEntry, ...existing.filter((item) => item.id !== fullEntry.id)].slice(
-    0,
-    50
-  );
+  const existing = getLocalEntriesRaw();
+  const next = [
+    fullEntry,
+    ...existing.filter((item) => item.id !== fullEntry.id),
+  ].slice(0, 50);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   return fullEntry;
 }
 
-export function getLocalEntries(): MirrorEntry[] {
+export function persistActionCompletion(
+  id: string,
+  input: CompleteActionRequest,
+  fallbackEntry: MirrorEntry
+): MirrorEntry {
+  const completedAt = input.completedAt || new Date().toISOString();
+  const entries = getLocalEntriesRaw();
+  const index = entries.findIndex((entry) => entry.id === id);
+  const base = index >= 0 ? entries[index] : fallbackEntry;
+
+  const anxietyReduction =
+    input.anxietyReduction ??
+    computeAnxietyReduction(input.anxietyBefore, input.anxietyAfter);
+
+  const updated = normalizeMirrorEntry({
+    ...base,
+    selectedSelfCareStep: input.selectedSelfCareStep,
+    actionCompleted: input.actionCompleted ?? true,
+    moodBeforeAction: input.moodBeforeAction,
+    moodAfterAction: input.moodAfterAction,
+    reflectionAfterAction: input.reflectionAfterAction,
+    anxietyBefore: input.anxietyBefore,
+    anxietyAfter: input.anxietyAfter,
+    anxietyReduction,
+    completedAt,
+  });
+
+  const next =
+    index >= 0
+      ? entries.map((entry, i) => (i === index ? updated : entry))
+      : [updated, ...entries];
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next.slice(0, 50)));
+  return updated;
+}
+
+/** @deprecated Use persistActionCompletion */
+export function updateLocalEntryAction(
+  id: string,
+  input: CompleteActionRequest,
+  fallbackEntry?: MirrorEntry
+): MirrorEntry | null {
+  if (!fallbackEntry) {
+    const entries = getLocalEntriesRaw();
+    const existing = entries.find((entry) => entry.id === id);
+    if (!existing) return null;
+    return persistActionCompletion(id, input, existing);
+  }
+  return persistActionCompletion(id, input, fallbackEntry);
+}
+
+function getLocalEntriesRaw(): MirrorEntry[] {
   if (typeof window === "undefined") return [];
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as MirrorEntry[];
+    const parsed = JSON.parse(raw) as MirrorEntry[];
+    return parsed.map((entry) => normalizeMirrorEntry(entry));
   } catch {
     return [];
   }
+}
+
+export function getLocalEntries(): MirrorEntry[] {
+  return getLocalEntriesRaw();
 }
 
 export function getLocalEntryById(id: string): MirrorEntry | null {
@@ -50,12 +113,13 @@ export function buildLocalEntry(
   originalMessage: string,
   result: AnalysisResult
 ): MirrorEntry {
-  return {
+  return normalizeMirrorEntry({
     id,
     sessionId,
     situation,
     originalMessage,
     createdAt: new Date().toISOString(),
+    ...EMPTY_ACTION_TRACKING,
     ...result,
-  };
+  });
 }

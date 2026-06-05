@@ -1,23 +1,24 @@
 "use client";
 
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import dynamic from "next/dynamic";
 import { Card } from "@/components/Card";
 import { useLanguage } from "@/components/LanguageProvider";
+import { useEffect, useMemo } from "react";
+import { computeActionInsights } from "@/lib/action-insights";
 import {
   computeGrowthStats,
   getHighestMilestone,
   MILESTONES,
 } from "@/lib/growth-stats";
 import type { MirrorEntry } from "@/types/analysis";
-import type { Language } from "@/lib/i18n/types";
+
+const AnxietyTrendChart = dynamic(
+  () =>
+    import("@/components/history/AnxietyTrendChart").then(
+      (mod) => mod.AnxietyTrendChart
+    ),
+  { ssr: false }
+);
 
 interface GrowthDashboardProps {
   entries: MirrorEntry[];
@@ -27,6 +28,21 @@ export function GrowthDashboard({ entries }: GrowthDashboardProps) {
   const { t, language } = useLanguage();
   const stats = computeGrowthStats(entries);
   const d = t.history.dashboard;
+  const actionInsights = computeActionInsights(
+    entries,
+    language,
+    t.result.moods
+  );
+  const { stats: actionStats } = actionInsights;
+  const completedEntries = useMemo(
+    () => entries.filter((entry) => entry.actionCompleted === true),
+    [entries]
+  );
+
+  useEffect(() => {
+    console.log("Completed action entries", completedEntries);
+  }, [completedEntries]);
+
   const milestone = getHighestMilestone(stats.count);
   const canShowTrend = stats.count >= 2;
   const changeAbs = Math.abs(stats.scoreChange);
@@ -74,48 +90,11 @@ export function GrowthDashboard({ entries }: GrowthDashboardProps) {
         <>
           <Card>
             <p className="mb-3 text-sm font-medium text-text">{d.chartTitle}</p>
-            <div className="h-44 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={stats.chartData}
-                  margin={{ top: 8, right: 8, left: -20, bottom: 0 }}
-                >
-                  <CartesianGrid stroke="#e8d5d0" strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="index"
-                    tick={{ fontSize: 11, fill: "#7a6b68" }}
-                    axisLine={{ stroke: "#e8d5d0" }}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    domain={[0, 100]}
-                    tick={{ fontSize: 11, fill: "#7a6b68" }}
-                    axisLine={{ stroke: "#e8d5d0" }}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: "#fffcfa",
-                      border: "1px solid #e8d5d0",
-                      borderRadius: "12px",
-                      fontSize: "12px",
-                    }}
-                    formatter={(value) => [value, t.history.anxietyLabel]}
-                    labelFormatter={(label) =>
-                      formatChartLabel(Number(label), language)
-                    }
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="score"
-                    stroke="#a67f7a"
-                    strokeWidth={2.5}
-                    dot={{ fill: "#a67f7a", r: 4 }}
-                    activeDot={{ r: 6, fill: "#a67f7a" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <AnxietyTrendChart
+              data={stats.chartData}
+              anxietyLabel={t.history.anxietyLabel}
+              language={language}
+            />
           </Card>
 
           <Card className="border-rose/15 bg-blush/20">
@@ -131,11 +110,83 @@ export function GrowthDashboard({ entries }: GrowthDashboardProps) {
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <MetricCard label={d.averageScore} value={String(stats.averageScore)} />
-        <MetricCard label={d.latestScore} value={String(stats.latestScore)} />
-        <MetricCard label={d.bestScore} value={String(stats.bestScore)} />
         <MetricCard label={d.reflectionCount} value={String(stats.count)} />
+        <MetricCard
+          label={d.actionCompletionCount}
+          value={String(actionStats.completionCount)}
+        />
+        <MetricCard
+          label={d.actionCompletionRate}
+          value={`${actionStats.completionRate}%`}
+        />
+        <MetricCard
+          label={d.mostCommonMoodAfter}
+          value={
+            actionStats.mostCommonMoodAfter
+              ? t.result.moods[actionStats.mostCommonMoodAfter]
+              : d.noMoodData
+          }
+        />
       </div>
+
+      <Card className="border-sage/15 bg-gradient-to-br from-card to-cream/50">
+        <p className="mb-4 font-display text-base font-semibold text-text">
+          {d.healingInsightsTitle}
+        </p>
+        {actionStats.completionCount === 0 ? (
+          <p className="text-sm text-text-muted">{d.noActionData}</p>
+        ) : (
+          <div className="space-y-4 text-sm">
+            {actionInsights.aiInsight && (
+              <div className="rounded-xl border border-rose/15 bg-blush/20 px-3 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-rose-deep">
+                  💡 {d.aiInsight}
+                </p>
+                <p className="mt-2 whitespace-pre-line leading-relaxed text-text">
+                  {actionInsights.aiInsight}
+                </p>
+              </div>
+            )}
+
+            {actionInsights.effectiveActions.length > 0 && (
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
+                  {d.mostEffectiveActions}
+                </p>
+                <div className="mt-3 space-y-3">
+                  {actionInsights.effectiveActions.map((item) => (
+                    <div
+                      key={item.action}
+                      className="rounded-xl border border-rose/10 bg-blush/15 px-3 py-3"
+                    >
+                      <p className="font-medium text-text">{item.action}</p>
+                      <p className="mt-1 text-text-muted">
+                        {d.avgAnxietyDrop.replace(
+                          "{points}",
+                          item.averageDrop.toFixed(1)
+                        )}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {actionInsights.commonMoodLabel && (
+              <InsightRow
+                label={d.commonMoodAfter}
+                value={actionInsights.commonMoodLabel}
+              />
+            )}
+            {actionInsights.patternText && (
+              <InsightRow
+                label={d.myPattern}
+                value={actionInsights.patternText}
+              />
+            )}
+          </div>
+        )}
+      </Card>
 
       <Card>
         <p className="mb-3 text-sm font-medium text-text">{d.milestoneTitle}</p>
@@ -152,6 +203,17 @@ export function GrowthDashboard({ entries }: GrowthDashboardProps) {
         </div>
       </Card>
     </section>
+  );
+}
+
+function InsightRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
+        {label}
+      </p>
+      <p className="mt-1 leading-relaxed text-text">{value}</p>
+    </div>
   );
 }
 
@@ -210,8 +272,4 @@ function getInsightText(
   points: number
 ): string {
   return insights[label].replace("{points}", String(points));
-}
-
-function formatChartLabel(index: number, language: Language): string {
-  return language === "zh" ? `第 ${index} 次` : `Reflection ${index}`;
 }

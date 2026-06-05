@@ -2,26 +2,31 @@
 
 import Link from "next/link";
 import { Card } from "@/components/Card";
-import type { AnalysisResult } from "@/types/analysis";
+import type { AnalysisResult, MirrorEntry } from "@/types/analysis";
 import { AnxietyScore } from "@/components/AnxietyScore";
 import { CopyButton } from "@/components/CopyButton";
 import { EmotionRecognition } from "@/components/EmotionRecognition";
+import { NextStepsSection } from "@/components/NextStepsSection";
 import { useLanguage } from "@/components/LanguageProvider";
+import { buildSelfCareSteps } from "@/lib/build-self-care-steps";
 
 interface ResultDisplayProps {
-  result: AnalysisResult;
-  situation?: string;
-  originalMessage?: string;
+  entry: MirrorEntry;
   showActions?: boolean;
+  onEntryUpdate: (entry: MirrorEntry) => void;
 }
 
 export function ResultDisplay({
-  result,
-  situation,
-  originalMessage,
+  entry,
   showActions = true,
+  onEntryUpdate,
 }: ResultDisplayProps) {
-  const { t } = useLanguage();
+  const result: AnalysisResult = entry;
+  const { t, language } = useLanguage();
+  const selfCareSteps =
+    (result.selfCareSteps?.length ?? 0) > 0
+      ? result.selfCareSteps
+      : buildSelfCareSteps(result.emotions ?? [], language);
 
   return (
     <div className="space-y-4 animate-fade-in-up">
@@ -66,15 +71,11 @@ export function ResultDisplay({
         <p className="leading-relaxed text-text">{result.boundaryStatement}</p>
       </Card>
 
-      <Card>
-        <div className="mb-2 flex items-center gap-2">
-          <span className="text-lg">🌱</span>
-          <h3 className="font-display text-lg font-semibold">
-            {t.result.suggestedNextStep}
-          </h3>
-        </div>
-        <p className="leading-relaxed text-text">{result.suggestedNextAction}</p>
-      </Card>
+      <NextStepsSection
+        entry={entry}
+        selfCareSteps={selfCareSteps}
+        onEntryUpdate={onEntryUpdate}
+      />
 
       <Card className="border-rose/10">
         <div className="mb-2 flex items-center gap-2">
@@ -86,17 +87,17 @@ export function ResultDisplay({
         <p className="leading-relaxed text-text-muted">{result.whatNotToDo}</p>
       </Card>
 
-      {originalMessage && (
+      {entry.originalMessage && (
         <details className="card p-4">
           <summary className="cursor-pointer text-sm font-medium text-text-muted">
             {t.result.viewOriginal}
           </summary>
           <p className="mt-3 text-sm leading-relaxed text-text-muted italic">
-            &ldquo;{originalMessage}&rdquo;
+            &ldquo;{entry.originalMessage}&rdquo;
           </p>
-          {situation && (
+          {entry.situation && (
             <p className="mt-2 text-xs text-text-muted">
-              {t.result.situationLabel}: {situation}
+              {t.result.situationLabel}: {entry.situation}
             </p>
           )}
         </details>

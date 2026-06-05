@@ -1,5 +1,6 @@
 import type { AnalysisResult } from "@/types/analysis";
 import type { Language } from "@/lib/i18n/types";
+import { buildSelfCareSteps } from "@/lib/build-self-care-steps";
 
 const SECURE_SIGNALS = [
   "maybe",
@@ -160,16 +161,31 @@ function buildMockEmotions(message: string, score: number, language: Language): 
   return ["abandoned", "anxious", "uncertain", "longing to reconnect"];
 }
 
+function buildRelationshipNextStep(score: number, language: Language): string {
+  if (language === "zh") {
+    return score <= 25
+      ? "暂停后再读一遍安全型重写：如果它仍然真实、平静，你可以选择是否分享——无论结果如何，你的价值不变。"
+      : "先不急着发送。把信息缩短、留出对方的选择空间，再决定是否表达——你的任务不是换取回复，而是诚实且尊重地表达自己。";
+  }
+
+  return score <= 25
+    ? "After a pause, re-read your secure rewrite. If it still feels true and calm, you may choose whether to share it — your worth doesn't depend on their response."
+    : "Pause before sending. Shorten the message, leave them choice, then decide whether to express yourself — your job isn't to earn a reply, but to communicate with honesty and respect.";
+}
+
 function buildMockResult(
   situation: string,
   message: string,
   language: Language
 ): AnalysisResult {
   const score = estimateAnxietyScore(message);
+  const emotions = buildMockEmotions(message, score, language);
+  const selfCareSteps = buildSelfCareSteps(emotions, language);
+  const relationshipNextStep = buildRelationshipNextStep(score, language);
 
   if (language === "zh") {
     return {
-      emotions: buildMockEmotions(message, score, "zh"),
+      emotions,
       anxietyScore: score,
       anxiousPatternAnalysis: buildPatternAnalysis(message, score, "zh"),
       secureRewrite:
@@ -178,10 +194,8 @@ function buildMockResult(
           : "我注意到我们最近联系少了，我有点在意。你方便的时候能简单聊几句吗？不着急，你按自己的节奏来就好。",
       boundaryStatement:
         "我可以表达想念或需求，同时尊重对方的选择与节奏。",
-      suggestedNextAction:
-        score <= 25
-          ? "如果这条信息仍然让你感到真实、平静，可以发送；发送后去做一件让你落地的事。"
-          : "发送前先读一遍：有没有给对方留选择？把信息缩短到两三句，再决定是否发送。",
+      relationshipNextStep,
+      selfCareSteps,
       whatNotToDo:
         score <= 25
           ? "不必因为表达需求而二次道歉；不要追加「你怎么还不回」类追问。"
@@ -190,7 +204,7 @@ function buildMockResult(
   }
 
   return {
-    emotions: buildMockEmotions(message, score, "en"),
+    emotions,
     anxietyScore: score,
     anxiousPatternAnalysis: buildPatternAnalysis(message, score, "en"),
     secureRewrite:
@@ -199,10 +213,8 @@ function buildMockResult(
         : "I've noticed some distance lately and I feel a little unsettled. When you have space, I'd appreciate a brief check-in — no rush on your end.",
     boundaryStatement:
       "I can express my needs while respecting the other person's choice and timing.",
-    suggestedNextAction:
-      score <= 25
-        ? "If this still feels true and calm, you can send it — then do something grounding afterward."
-        : "Before sending, read it once: does it leave them choice? Trim to 2–3 sentences, then decide.",
+    relationshipNextStep,
+    selfCareSteps,
     whatNotToDo:
       score <= 25
         ? "Don't apologize twice for having a need; avoid adding a follow-up like 'why haven't you replied?'"

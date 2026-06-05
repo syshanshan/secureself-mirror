@@ -46,17 +46,15 @@ export default function InputPage() {
         throw new Error(data.error || t.input.errorAnalysisFailed);
       }
 
-      if (data.source === "local") {
-        saveLocalEntry(
-          buildLocalEntry(
-            data.id,
-            data.sessionId,
-            situation.trim(),
-            message.trim(),
-            data.data
-          )
-        );
-      }
+      saveLocalEntry(
+        buildLocalEntry(
+          data.id,
+          data.sessionId,
+          situation.trim(),
+          message.trim(),
+          data.data
+        )
+      );
 
       router.push(`/result/${data.id}`);
     } catch (err) {

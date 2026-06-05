@@ -2,7 +2,9 @@ import OpenAI from "openai";
 import type { AnalysisResult } from "@/types/analysis";
 import type { Language } from "@/lib/i18n/types";
 import { getMockAnalysis } from "@/lib/mock-analysis";
+import { buildSelfCareSteps } from "@/lib/build-self-care-steps";
 import { normalizeEmotions } from "@/lib/normalize-emotions";
+import { normalizeNextSteps } from "@/lib/normalize-next-steps";
 import {
   ANALYSIS_QUALITY_RULES,
   CHINESE_ANALYSIS_RULES,
@@ -18,7 +20,8 @@ Analyze the user's relationship situation and draft message. Return ONLY valid J
   "anxietyScore": number — integer 0-100 using the rubric below,
   "secureRewrite": "string — rewritten message in secure tone. If already secure, a light polish is enough.",
   "boundaryStatement": "string — one calm boundary in first person",
-  "suggestedNextAction": "string — one concrete, kind next step",
+  "relationshipNextStep": "string — ONE secure relationship step focused on YOUR communication choice, NOT on controlling their response. Do NOT say wait for their reply, do not contact them, or check if they read your message. Good examples: pause before sending; edit for clarity and choice; decide whether to send the secure rewrite after grounding. Bad examples: wait for reply; don't text them.",
+  "selfCareSteps": ["string"] — 2-3 personalized self-care actions based on the detected emotions. Focus on regulating and caring for oneself RIGHT NOW (walk, breathing, journaling, calling a friend, outdoors, creative activity). Match emotions: anxiety→grounding; abandonment→connection with self/friend; loneliness→social/creative; anger→movement/release. NOT about the other person.",
   "whatNotToDo": "string — 2-3 behaviors to avoid, separated by semicolons (only those relevant to THIS message)"
 }
 
@@ -32,7 +35,9 @@ Additional guidelines:
 - Be warm, validating, and non-judgmental
 - Never diagnose or use clinical labels harshly
 - Keep secure rewrite natural and sendable (not therapy-speak)
-- Write ALL string values in the language specified by the user (English or Chinese)`;
+- Write ALL string values in the language specified by the user (English or Chinese)
+- relationshipNextStep must help the user with their own secure choice — never chase, monitor, or punish the other person
+- selfCareSteps must answer: "What can I do for myself right now?"`;
 
 function buildUserPrompt(
   situation: string,
@@ -55,15 +60,17 @@ Message they want to send:
 ${originalMessage}`;
 }
 
-function validateAnalysisResult(parsed: unknown): parsed is AnalysisResult {
+function validateAnalysisResult(parsed: unknown): parsed is Record<string, unknown> {
   if (!parsed || typeof parsed !== "object") return false;
   const r = parsed as Record<string, unknown>;
+  const { relationshipNextStep } = normalizeNextSteps(r);
+
   return (
     typeof r.anxiousPatternAnalysis === "string" &&
     typeof r.anxietyScore === "number" &&
     typeof r.secureRewrite === "string" &&
     typeof r.boundaryStatement === "string" &&
-    typeof r.suggestedNextAction === "string" &&
+    Boolean(relationshipNextStep) &&
     typeof r.whatNotToDo === "string"
   );
 }
@@ -98,15 +105,31 @@ async function callOpenAI(
     throw new Error("No response from OpenAI");
   }
 
-  const parsed: unknown = JSON.parse(content);
+  const parsed = JSON.parse(content) as Record<string, unknown>;
   if (!validateAnalysisResult(parsed)) {
     throw new Error("Invalid analysis structure from OpenAI");
   }
 
+  const { relationshipNextStep, selfCareSteps: rawSelfCare } =
+    normalizeNextSteps(parsed);
+  const emotions = normalizeEmotions(parsed.emotions);
+  const selfCareSteps =
+    rawSelfCare.length >= 2
+      ? rawSelfCare
+      : buildSelfCareSteps(emotions, language);
+
   return {
-    ...parsed,
-    emotions: normalizeEmotions(parsed.emotions),
-    anxietyScore: Math.min(100, Math.max(0, Math.round(parsed.anxietyScore))),
+    anxiousPatternAnalysis: parsed.anxiousPatternAnalysis as string,
+    anxietyScore: Math.min(
+      100,
+      Math.max(0, Math.round(parsed.anxietyScore as number))
+    ),
+    secureRewrite: parsed.secureRewrite as string,
+    boundaryStatement: parsed.boundaryStatement as string,
+    relationshipNextStep,
+    selfCareSteps,
+    whatNotToDo: parsed.whatNotToDo as string,
+    emotions,
   };
 }
 
